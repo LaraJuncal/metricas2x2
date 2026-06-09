@@ -1,0 +1,10 @@
+name: shiny
+title:
+username: larajuncal
+account: larajuncal
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17432761
+bundleId: 12050728
+url: https://larajuncal.shinyapps.io/shiny/
+version: 1
