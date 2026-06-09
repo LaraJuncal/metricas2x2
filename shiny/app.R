@@ -152,15 +152,21 @@ ui <- fluidPage(
 
         div(
           style = "max-height: 720px; overflow-y: auto;",
-          tableOutput("tabla")
+          h4("Medidas básicas de diagnóstico"),
+tableOutput("tabla_basicas"),
+
+h4("Medidas de concordancia sin corregir por azar"),
+tableOutput("tabla_sin_azar"),
+
+h4("Medidas de concordancia corregidas por azar"),
+tableOutput("tabla_con_azar")
         ),
 
         div(
           class = "note",
           HTML(
-            "Las métricas mostradas corresponden a la estimación puntual y su error estándar.
-             Las medidas simples utilizan estimación analítica y algunas métricas complejas utilizan bootstrap."
-          )
+  "Las métricas se agrupan según su interpretación. El error estándar puede obtenerse de forma analítica o mediante bootstrap según la métrica."
+)
         )
       )
     )
@@ -203,42 +209,69 @@ server <- function(input, output) {
       B = input$B
     )
 
-    nombres_bonitos <- c(
-      "Sensibilidad",
-      "Especificidad",
-      "Tasa de falsos positivos",
-      "Tasa de falsos negativos",
-      "Valor predictivo positivo",
-      "Valor predictivo negativo",
-      "Accuracy",
-      "Error rate",
-      "Balanced Accuracy",
-      "Youden Index",
-      "Markedness",
-      "F1-score",
-      "Likelihood Ratio +",
-      "Likelihood Ratio -",
-      "Diagnostic Odds Ratio",
-      "Matthews Correlation Coefficient",
-      "Yule Q",
-      "Yule Y",
-      "Cohen's Kappa",
-      "Scott's Pi",
-      "Bennett's S",
-      "AC1 de Gwet",
-      "Delta"
-    )
+   clasificacion <- data.frame(
+  metrica_original = c(
+    "sensibilidad", "especificidad", "fpr", "fnr",
+    "ppv", "npv", "accuracy", "error_rate",
+    "balanced_accuracy", "youden", "markedness", "f1",
+    "lr_pos", "lr_neg", "dor", "mcc", "yule_q", "yule_y",
+    "kappa", "scott_pi", "bennett_s", "ac1", "delta"
+  ),
+  nombre_bonito = c(
+    "Sensibilidad",
+    "Especificidad",
+    "Tasa de falsos positivos",
+    "Tasa de falsos negativos",
+    "Valor predictivo positivo",
+    "Valor predictivo negativo",
+    "Accuracy",
+    "Error rate",
+    "Balanced Accuracy",
+    "Youden Index",
+    "Markedness",
+    "F1-score",
+    "Likelihood Ratio +",
+    "Likelihood Ratio -",
+    "Diagnostic Odds Ratio",
+    "Matthews Correlation Coefficient",
+    "Yule Q",
+    "Yule Y",
+    "Cohen's Kappa",
+    "Scott's Pi",
+    "Bennett's S",
+    "AC1 de Gwet",
+    "Delta"
+  ),
+  grupo = c(
+    rep("Medidas básicas de diagnóstico", 8),
+    rep("Medidas de concordancia sin corregir por azar", 10),
+    rep("Medidas de concordancia corregidas por azar", 5)
+  ),
+  metodo_se = c(
+    rep("Analítico", 11),
+    rep("Bootstrap", 12)
+  ),
+  stringsAsFactors = FALSE
+)
 
-    res$metrica <- nombres_bonitos
+idx <- match(res$metrica, clasificacion$metrica_original)
 
-    res$statistic <- sprintf("%.3f", res$statistic)
-    res$se <- sprintf("%.3f", res$se)
+res$Grupo <- clasificacion$grupo[idx]
+res$Métrica <- clasificacion$nombre_bonito[idx]
+res$`Método SE` <- clasificacion$metodo_se[idx]
 
-    colnames(res) <- c(
-      "Métrica",
-      "Estimación",
-      "Error estándar"
-    )
+res$statistic <- sprintf("%.3f", res$statistic)
+res$se <- sprintf("%.3f", res$se)
+
+res <- res[, c("Grupo", "Métrica", "statistic", "se", "Método SE")]
+
+colnames(res) <- c(
+  "Grupo",
+  "Métrica",
+  "Estimación",
+  "Error estándar",
+  "Método SE"
+)
 
     res
   })
@@ -247,18 +280,20 @@ server <- function(input, output) {
 
     req(resultados())
 
-    paste0(
-      "Resultados (",
-      nrow(resultados()),
-      " métricas)"
-    )
+    paste0("Resultados agrupados por tipo de métrica")
   })
 
-  output$tabla <- renderTable({
+output$tabla_basicas <- renderTable({
+  subset(resultados(), Grupo == "Medidas básicas de diagnóstico")[, -1]
+}, striped = TRUE, bordered = FALSE, spacing = "m")
 
-    resultados()
+output$tabla_sin_azar <- renderTable({
+  subset(resultados(), Grupo == "Medidas de concordancia sin corregir por azar")[, -1]
+}, striped = TRUE, bordered = FALSE, spacing = "m")
 
-  }, striped = TRUE, bordered = FALSE, spacing = "m")
+output$tabla_con_azar <- renderTable({
+  subset(resultados(), Grupo == "Medidas de concordancia corregidas por azar")[, -1]
+}, striped = TRUE, bordered = FALSE, spacing = "m")
 }
 
 
