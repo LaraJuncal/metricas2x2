@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Resultados temporales del TFM
+resultados_simulacion.csv
+
+# Figuras generadas por simulaciones
+*.png
+*.pdf
